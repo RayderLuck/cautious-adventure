@@ -14,7 +14,7 @@ h1{margin:10px}
 <body>
 <h1>AVENTURA CAUTELOSA - VM</h1>
 <div id="screen_container"></div>
-<div id="terminal" style="margin-top:10px; color:#0f0;"></div>
+<div id="terminal" style="margin-top:10px; color:#0f0;">Iniciando...</div>
 
 <script src="V86/libv86.js"></script>
 <script>
@@ -22,6 +22,7 @@ var emulator = new V86({
     screen_container: document.getElementById("screen_container"),
     bios: { url: "V86/seabios.bin" },
     vga_bios: { url: "V86/vgabios.bin" },
+    v86: { url: "V86/v86.wasm" },
     bzimage: { url: "V86/bzimage" },
     initrd: { url: "V86/initrd" },
     filesystem: {},
@@ -30,6 +31,13 @@ var emulator = new V86({
 });
 emulator.add_listener("emulator-ready", function(){ 
     document.getElementById("terminal").innerText = "VM carregada! Bootando...";
+});
+emulator.add_listener("download-progress", function(e){
+    document.getElementById("terminal").innerText = "Baixando: " + e.file_name + " " + Math.round(e.loaded/e.total*100) + "%";
+});
+emulator.add_listener("download-error", function(e){
+    document.getElementById("terminal").innerText = "ERRO ao baixar " + e.file_name + ": " + e.err;
+    console.error(e);
 });
 </script>
 </body>
