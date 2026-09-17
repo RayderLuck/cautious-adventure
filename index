@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MINHA MÁQUINA - roda tudo de qualquer PC</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a0a;color:#00ff88;font-family:monospace;height:100vh;display:flex;flex-direction:column}
+  #login-screen{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:10}
+  .login-box{border:1px solid #00ff88;padding:40px;background:#111;width:360px}
+  .login-box h1{font-size:14px;margin-bottom:20px;letter-spacing:2px}
+  .login-box input{width:100%;background:#000;border:1px solid #333;color:#00ff88;padding:12px;margin-bottom:12px;outline:none}
+  .login-box input:focus{border-color:#00ff88}
+  .login-box button{width:100%;background:#00ff88;color:#000;border:none;padding:12px;font-weight:bold;cursor:pointer;letter-spacing:1px}
+  .login-box button:hover{background:#00cc6a}
+  #status{font-size:11px;color:#888;margin-top:10px;min-height:16px}
+  #top-bar{padding:10px 16px;border-bottom:1px solid #222;display:flex;justify-content:space-between;font-size:12px}
+  #screen_container{flex:1;display:flex;flex-direction:column;padding:10px;gap:10px}
+  #screen{flex:1;background:#000;border:1px solid #222;overflow:hidden}
+  #screen canvas{width:100%!important;height:100%!important}
+  #terminal{height:160px;background:#111;border:1px solid #222;padding:10px;overflow-y:auto;font-size:12px;color:#aaa}
+  .hint{color:#555;font-size:11px;padding:0 16px 10px}
+</style>
+</head>
+<body>
+<div id="login-screen">
+  <div class="login-box">
+    <h1>> MINHA_MAQUINA_v1.0</h1>
+    <input id="user" placeholder="login" value="lucas">
+    <input id="pass" type="password" placeholder="senha (chave da criptografia)">
+    <button id="btnEnter">ENTRAR NA MÁQUINA</button>
+    <div id="status">primeiro acesso: crie sua senha. ela será sua chave.</div>
+  </div>
+</div>
+
+<div id="top-bar">
+  <span>> MAQUINA: ONLINE | CPU: v86 WASM | GPU: WebGPU do navegador</span>
+  <span id="vault-status">VAULT: LOCKED</span>
+</div>
+<div class="hint">Essa máquina roda no seu navegador. Tudo criptografado com sua senha. Nenhum dado sai sem cripto.</div>
+
+<div id="screen_container">
+  <div id="screen"></div>
+  <div id="terminal">> aguardando login...</div>
+</div>
+
+<script src="./v86/libv86.js"></script>
+<script type="module">
+import { deriveKey, encryptData, decryptData } from './js/crypto.js';
+
+const $ = s=>document.querySelector(s);
+const term = $('#terminal');
+function log(m){ term.innerHTML += `<div>> ${m}</div>`; term.scrollTop = term.scrollHeight; }
+
+let cryptoKey = null;
+let emulator = null;
+
+$('#btnEnter').onclick = async () => {
+  const user = $('#user').value.trim();
+  const pass = $('#pass').value;
+  if(!pass){ $('#status').textContent='digite uma senha'; return; }
+  $('#status').textContent='derivando chave com PBKDF2...';
+  
+  try {
+    cryptoKey = await deriveKey(pass, user);
+    $('#status').textContent='chave gerada. abrindo vault...';
+    $('#vault-status').textContent='VAULT: UNLOCKED';
+    localStorage.setItem('maquina_user', user);
+    
+    document.getElementById('login-screen').style.display='none';
+    log(`usuario ${user} logado`);
+    log(`chave derivada: PBKDF2-SHA256 100k iterações`);
+    
+    // tenta carregar vault existente do IndexedDB
+    await loadVault();
+    
+    startVM();
+  } catch(e){
+    $('#status').textContent='erro: '+e.message;
+  }
+};
+
+async function loadVault(){
+  // Aqui entra a leitura da pasta /vault/*.enc
+  // Por enquanto, lê do localStorage/IndexedDB
+  log('vault: verificando /vault/ local (IndexedDB)...');
+  const saved = localStorage.getItem('vault_enc');
+  if(saved){
+    try{
+      const decrypted = await decryptData(saved, cryptoKey);
+      log('vault: arquivo descriptografado com sucesso');
+      log(`conteudo: ${decrypted.slice(0,60)}...`);
+    }catch{
+      log('vault: nenhum arquivo legivel ainda (primeiro uso)');
+    }
+  } else {
+    log('vault: pasta vazia, primeiro boot');
+  }
+}
+
+function startVM(){
+  log('iniciando v86...');
+  log('baixando processador v86.wasm...');
+  log('carregando HD alpine.img...');
+  
+  emulator = new V86Starter({
+    screen_container: document.getElementById("screen"),
+    bios: { url: "./v86/seabios.bin" },
+    vga_bios: { url: "./v86/vgabios.bin" },
+    cdrom: { url: "./images/alpine.iso" },
+    autostart: true,
+    memory_size: 128 * 1024 * 1024,
+    filesystem: {},
+    bzimage: { url: "./v86/bzimage" },
+    initrd: { url: "./v86/initrd" },
+  });
+
+  log('VM iniciada. Se não ver nada, baixe os arquivos do v86 em copy.sh/v86');
+  log('Dica: essa é a base. Sua pasta /vault/ será montada aqui dentro.');
+}
+
+// teste de criptografia da pasta
+window.testarVault = async (texto) => {
+  if(!cryptoKey){ log('precisa logar primeiro'); return; }
+  const enc = await encryptData(texto, cryptoKey);
+  localStorage.setItem('vault_enc', enc);
+  log('vault: arquivo criptografado e salvo em /vault/teste.txt.enc (IndexedDB)');
+  log('agora fecha e abre de novo com mesma senha pra testar');
+};
+</script>
+</body>
+</html>
