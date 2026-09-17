@@ -1,44 +1,16 @@
 <!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aventura Cautelosa</title>
-<style>
-body{margin:0;background:#0a0a0a;color:#fff;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}
-#screen_container{border:2px solid #333;width:800px;max-width:95vw;height:600px;background:#000}
-#screen_container canvas{display:block}
-h1{margin:10px}
-</style>
-</head>
-<body>
-<h1>AVENTURA CAUTELOSA - VM</h1>
-<div id="screen_container"></div>
-<div id="terminal" style="margin-top:10px; color:#0f0;">Iniciando...</div>
-
-<script src="V86/libv86.js"></script>
+<html><head><meta charset="utf-8"><title>Maquina</title></head>
+<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh">
+<div id="screen" style="width:800px;height:600px"></div>
+<script src="https://copy.sh/v86/build/libv86.js"></script>
 <script>
-var emulator = new V86({
-    screen_container: document.getElementById("screen_container"),
-    bios: { url: "V86/seabios.bin" },
-    vga_bios: { url: "V86/vgabios.bin" },
-    v86: { url: "V86/v86.wasm" },
-    bzimage: { url: "V86/bzimage" },
-    initrd: { url: "V86/initrd" },
-    filesystem: {},
-    autostart: true,
-    memory_size: 128 * 1024 * 1024,
-});
-emulator.add_listener("emulator-ready", function(){ 
-    document.getElementById("terminal").innerText = "VM carregada! Bootando...";
-});
-emulator.add_listener("download-progress", function(e){
-    document.getElementById("terminal").innerText = "Baixando: " + e.file_name + " " + Math.round(e.loaded/e.total*100) + "%";
-});
-emulator.add_listener("download-error", function(e){
-    document.getElementById("terminal").innerText = "ERRO ao baixar " + e.file_name + ": " + e.err;
-    console.error(e);
+new V86({
+  screen_container: document.getElementById("screen"),
+  bios: {url:"https://copy.sh/v86/bios/seabios.bin"},
+  vga_bios: {url:"https://copy.sh/v86/bios/vgabios.bin"},
+  bzimage: {url:"https://copy.sh/v86/bzimage"},
+  initrd: {url:"https://copy.sh/v86/rootfs.bin"},
+  autostart: true
 });
 </script>
-</body>
-</html>
+</body></html>
