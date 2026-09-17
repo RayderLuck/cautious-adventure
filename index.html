@@ -2,30 +2,26 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maquina - VM</title>
+<title>Maquina</title>
 <style>
-  body { margin:0; background:#0a0a0a; color:#fff; font-family:monospace; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; }
-  h1 { letter-spacing:3px; }
-  #screen_container { width:800px; max-width:95vw; height:600px; background:#000; border:2px solid #333; }
-  #screen_container div { width:100%; height:100%; }
+ body{margin:0;background:#0a0a0a;color:#fff;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}
+ #screen_container{width:800px;max-width:95vw;height:600px;background:#000;border:2px solid #333}
+ #screen_container div{width:100%;height:100%}
 </style>
 </head>
 <body>
 <h1>MAQUINA</h1>
 <div id="screen_container"></div>
-
 <script src="v86/libv86.js"></script>
 <script>
-"use strict";
-var emulator = new V86({
-    screen_container: document.getElementById("screen_container"),
-    bios: { url: "v86/seabios.bin" },
-    vga_bios: { url: "v86/vgabios.bin" },
-    bzimage: { url: "v86/bzimage" },
-    initrd: { url: "v86/initrd" },
-    wasm_path: "v86/v86.wasm",
-    autostart: true
+new V86({
+  screen_container: document.getElementById("screen_container"),
+  bios: { url: "v86/seabios.bin" },
+  vga_bios: { url: "v86/vgabios.bin" },
+  bzimage: { url: "v86/bzimage" },
+  initrd: { url: "v86/initrd" },
+  wasm_path: "v86/v86.wasm",
+  autostart: true
 });
 </script>
 </body>
