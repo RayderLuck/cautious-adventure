@@ -1,0 +1,1 @@
+<html><head><meta charset="utf-8" /><meta name="referrer" content="origin" /></head><body><script type="text/javascript" nonce="BeqXneZD">document.location.replace("https:\/\/cdn.jsdelivr.net\/npm\/v86\u0040latest\/build\/libv86.js");</script></body></html>
